@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
 
+enum Difficulty { easy, impossible }
+
+Difficulty? selectedDifficulty;
+
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -27,6 +31,13 @@ class _TicTacToePageState extends State<TicTacToePage> {
   bool gameOver = false;
   bool playerStarts = true;
   bool isGameStarted = false;
+  Difficulty _difficulty = Difficulty.easy; // Default to easy
+
+  void _setDifficulty(Difficulty difficulty) {
+    setState(() {
+      _difficulty = difficulty;
+    });
+  }
 
   void _startGame(bool playerFirst) {
     setState(() {
@@ -54,6 +65,23 @@ class _TicTacToePageState extends State<TicTacToePage> {
   }
 
   void _aiMove() {
+    if (selectedDifficulty == Difficulty.easy) {
+      _aiMoveEasy();
+    } else {
+      _aiMoveImpossible();
+    }
+  }
+
+  void _aiMoveEasy() {
+    var emptySpots =
+        List.generate(9, (i) => i).where((i) => board[i] == '').toList();
+    if (emptySpots.isNotEmpty) {
+      final randomIndex = Random().nextInt(emptySpots.length);
+      board[emptySpots[randomIndex]] = 'O';
+    }
+  }
+
+  void _aiMoveImpossible() {
     int bestVal = -1000;
     int bestMove = -1;
 
@@ -208,6 +236,12 @@ class _TicTacToePageState extends State<TicTacToePage> {
     }
   }
 
+  void _selectDifficulty(Difficulty difficulty) {
+    setState(() {
+      selectedDifficulty = difficulty;
+    });
+  }
+
   Widget _buildCell(int index) {
     return GestureDetector(
       onTap: () => _handleTap(index),
@@ -242,32 +276,56 @@ class _TicTacToePageState extends State<TicTacToePage> {
         // Removing the AppBar
         body: !isGameStarted
             ? Center(
-                // Main menu with title
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
                     Text(
                       'Tic Tac Toe',
                       style: TextStyle(
-                        fontSize: 48.0, // Large font size for the title
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue, // Color of the title
-                      ),
+                          fontSize: 48.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue),
                     ),
-                    SizedBox(height: 20), // Spacing between title and buttons
+                    SizedBox(height: 20),
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: ElevatedButton(
                         onPressed: () => _startGame(true),
                         child: Text('Player Starts'),
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.all(8.0),
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: ElevatedButton(
                         onPressed: () => _startGame(false),
                         child: Text('AI Starts'),
                       ),
+                    ),
+                    SizedBox(height: 20),
+                    Text('Select Difficulty', style: TextStyle(fontSize: 24)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        ElevatedButton(
+                          onPressed: () => _selectDifficulty(Difficulty.easy),
+                          child: Text('Easy'),
+                          style: ElevatedButton.styleFrom(
+                            primary: selectedDifficulty == Difficulty.easy
+                                ? Colors.red
+                                : Colors.yellow,
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () =>
+                              _selectDifficulty(Difficulty.impossible),
+                          child: Text('Impossible'),
+                          style: ElevatedButton.styleFrom(
+                            primary: selectedDifficulty == Difficulty.impossible
+                                ? Colors.red
+                                : Colors.yellow,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
