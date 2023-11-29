@@ -1,115 +1,160 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Tic Tac Toe',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: TicTacToePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
+class TicTacToePage extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _TicTacToePageState createState() => _TicTacToePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _TicTacToePageState extends State<TicTacToePage> {
+  List<String> board = List.generate(9, (index) => '');
+  String winner = '';
+  bool gameOver = false;
 
-  void _incrementCounter() {
+  void _handleTap(int index) {
+    if (board[index] != '' || gameOver) return;
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      board[index] = 'X';
+      _checkGameState();
+      if (!gameOver) {
+        _aiMove();
+        _checkGameState();
+      }
     });
+  }
+
+  void _aiMove() {
+    var emptySpots =
+        List.generate(9, (i) => i).where((i) => board[i] == '').toList();
+    if (emptySpots.isNotEmpty) {
+      final randomIndex = Random().nextInt(emptySpots.length);
+      board[emptySpots[randomIndex]] = 'O';
+    }
+  }
+
+  void _checkGameState() {
+    if (_checkWinner('X')) {
+      winner = 'Player wins!';
+      gameOver = true;
+    } else if (_checkWinner('O')) {
+      winner = 'AI wins!';
+      gameOver = true;
+    } else if (!board.contains('')) {
+      winner = 'It\'s a Draw!';
+      gameOver = true;
+    }
+  }
+
+  bool _checkWinner(String player) {
+    const winningPatterns = [
+      {0, 1, 2},
+      {3, 4, 5},
+      {6, 7, 8},
+      {0, 3, 6},
+      {1, 4, 7},
+      {2, 5, 8},
+      {0, 4, 8},
+      {2, 4, 6}
+    ];
+
+    for (var pattern in winningPatterns) {
+      if (pattern.every((index) => board[index] == player)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void _resetGame() {
+    setState(() {
+      board = List.generate(9, (index) => '');
+      winner = '';
+      gameOver = false;
+    });
+  }
+
+  Widget _buildCell(int index) {
+    return GestureDetector(
+      onTap: () => _handleTap(index),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.lightBlueAccent,
+          border: Border.all(color: Colors.black),
+        ),
+        child: AnimatedSwitcher(
+          duration: Duration(milliseconds: 300),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return ScaleTransition(scale: animation, child: child);
+          },
+          child: Text(
+            board[index],
+            key: ValueKey<String>(board[index]),
+            style: TextStyle(
+              fontSize: 64.0,
+              color: board[index] == 'X' ? Colors.white : Colors.red,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text('Tic Tac Toe'),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          if (winner.isNotEmpty) ...[
             Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+              winner,
+              style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _resetGame,
+              child: Text('Restart Game'),
+            )
+          ] else ...[
+            GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 1.0,
+                crossAxisSpacing: 10.0,
+                mainAxisSpacing: 10.0,
+              ),
+              itemCount: 9,
+              shrinkWrap: true,
+              padding: EdgeInsets.all(16.0),
+              itemBuilder: (context, index) {
+                return _buildCell(index);
+              },
             ),
           ],
-        ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
