@@ -54,11 +54,28 @@ class _TicTacToePageState extends State<TicTacToePage> {
   }
 
   void _aiMove() {
-    var emptySpots =
-        List.generate(9, (i) => i).where((i) => board[i] == '').toList();
-    if (emptySpots.isNotEmpty) {
-      final randomIndex = Random().nextInt(emptySpots.length);
-      board[emptySpots[randomIndex]] = 'O';
+    int bestVal = -1000;
+    int bestMove = -1;
+
+    for (int i = 0; i < board.length; i++) {
+      // Check if cell is empty
+      if (board[i] == '') {
+        // Make the move
+        board[i] = 'O';
+        // Compute evaluation function for this move.
+        int moveVal = _minimax(false);
+        // Undo the move
+        board[i] = '';
+        // If the value of the current move is more than the best value, then update best
+        if (moveVal > bestVal) {
+          bestMove = i;
+          bestVal = moveVal;
+        }
+      }
+    }
+
+    if (bestMove != -1) {
+      board[bestMove] = 'O';
     }
   }
 
@@ -112,6 +129,85 @@ class _TicTacToePageState extends State<TicTacToePage> {
     });
   }
 
+  int _evaluateBoard() {
+    // Checking for Rows for X or O victory.
+    for (int row = 0; row < 3; row++) {
+      if (board[row * 3] == board[row * 3 + 1] &&
+          board[row * 3 + 1] == board[row * 3 + 2]) {
+        if (board[row * 3] == 'O')
+          return 10;
+        else if (board[row * 3] == 'X') return -10;
+      }
+    }
+
+    // Checking for Columns for X or O victory.
+    for (int col = 0; col < 3; col++) {
+      if (board[col] == board[col + 3] && board[col + 3] == board[col + 6]) {
+        if (board[col] == 'O')
+          return 10;
+        else if (board[col] == 'X') return -10;
+      }
+    }
+
+    // Checking for Diagonals for X or O victory.
+    if (board[0] == board[4] && board[4] == board[8]) {
+      if (board[0] == 'O')
+        return 10;
+      else if (board[0] == 'X') return -10;
+    }
+    if (board[2] == board[4] && board[4] == board[6]) {
+      if (board[2] == 'O')
+        return 10;
+      else if (board[2] == 'X') return -10;
+    }
+
+    // Else if none of them have won then return 0
+    return 0;
+  }
+
+  int _minimax(bool isMax) {
+    int score = _evaluateBoard();
+
+    // If Maximizer has won the game return their evaluated score
+    if (score == 10) return score;
+
+    // If Minimizer has won the game return their evaluated score
+    if (score == -10) return score;
+
+    // If there are no more moves and no winner then it is a tie
+    if (!board.contains('')) return 0;
+
+    if (isMax) {
+      int best = -1000;
+      for (int i = 0; i < board.length; i++) {
+        // Check if cell is empty
+        if (board[i] == '') {
+          // Make the move
+          board[i] = 'O';
+          // Call minimax recursively and choose the maximum value
+          best = max(best, _minimax(!isMax));
+          // Undo the move
+          board[i] = '';
+        }
+      }
+      return best;
+    } else {
+      int best = 1000;
+      for (int i = 0; i < board.length; i++) {
+        // Check if cell is empty
+        if (board[i] == '') {
+          // Make the move
+          board[i] = 'X';
+          // Call minimax recursively and choose the minimum value
+          best = min(best, _minimax(!isMax));
+          // Undo the move
+          board[i] = '';
+        }
+      }
+      return best;
+    }
+  }
+
   Widget _buildCell(int index) {
     return GestureDetector(
       onTap: () => _handleTap(index),
@@ -140,96 +236,99 @@ class _TicTacToePageState extends State<TicTacToePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // Removing the AppBar
-      body: !isGameStarted
-          ? Center(
-              // Main menu with title
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    'Tic Tac Toe',
-                    style: TextStyle(
-                      fontSize: 48.0, // Large font size for the title
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue, // Color of the title
-                    ),
-                  ),
-                  SizedBox(height: 20), // Spacing between title and buttons
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: ElevatedButton(
-                      onPressed: () => _startGame(true),
-                      child: Text('Player Starts'),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: ElevatedButton(
-                      onPressed: () => _startGame(false),
-                      child: Text('AI Starts'),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                if (winner.isNotEmpty) ...[
-                  Expanded(
-                    // Centering the end-game screen
-                    child: Center(
-                      child: Column(
-                        mainAxisSize:
-                            MainAxisSize.min, // Aligns children to the center
-                        children: [
-                          Text(
-                            winner,
-                            style: TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green),
-                          ),
-                          SizedBox(height: 20),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(
-                              onPressed: _resetGame,
-                              child: Text('Restart Game'),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(
-                              onPressed: _backToMainMenu,
-                              child: Text('Back to Main Menu'),
-                            ),
-                          ),
-                        ],
+    return MaterialApp(
+      restorationScopeId: "Test",
+      home: Scaffold(
+        // Removing the AppBar
+        body: !isGameStarted
+            ? Center(
+                // Main menu with title
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      'Tic Tac Toe',
+                      style: TextStyle(
+                        fontSize: 48.0, // Large font size for the title
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue, // Color of the title
                       ),
                     ),
-                  )
-                ] else ...[
-                  GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      childAspectRatio: 1.0,
-                      crossAxisSpacing: 10.0,
-                      mainAxisSpacing: 10.0,
+                    SizedBox(height: 20), // Spacing between title and buttons
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ElevatedButton(
+                        onPressed: () => _startGame(true),
+                        child: Text('Player Starts'),
+                      ),
                     ),
-                    itemCount: 9,
-                    shrinkWrap: true,
-                    padding: EdgeInsets.all(16.0),
-                    itemBuilder: (context, index) {
-                      return _buildCell(index);
-                    },
-                  ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ElevatedButton(
+                        onPressed: () => _startGame(false),
+                        child: Text('AI Starts'),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  if (winner.isNotEmpty) ...[
+                    Expanded(
+                      // Centering the end-game screen
+                      child: Center(
+                        child: Column(
+                          mainAxisSize:
+                              MainAxisSize.min, // Aligns children to the center
+                          children: [
+                            Text(
+                              winner,
+                              style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green),
+                            ),
+                            SizedBox(height: 20),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ElevatedButton(
+                                onPressed: _resetGame,
+                                child: Text('Restart Game'),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ElevatedButton(
+                                onPressed: _backToMainMenu,
+                                child: Text('Back to Main Menu'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  ] else ...[
+                    GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        childAspectRatio: 1.0,
+                        crossAxisSpacing: 10.0,
+                        mainAxisSpacing: 10.0,
+                      ),
+                      itemCount: 9,
+                      shrinkWrap: true,
+                      padding: EdgeInsets.all(16.0),
+                      itemBuilder: (context, index) {
+                        return _buildCell(index);
+                      },
+                    ),
+                  ],
                 ],
-              ],
-            ),
+              ),
+      ),
     );
   }
 }
