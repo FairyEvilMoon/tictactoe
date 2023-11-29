@@ -25,15 +25,18 @@ class _TicTacToePageState extends State<TicTacToePage> {
   List<String> board = List.generate(9, (index) => '');
   String winner = '';
   bool gameOver = false;
-  bool playerStarts = true; // New variable to track who starts
-  bool isGameStarted = false; // Track if the game has started
+  bool playerStarts = true;
+  bool isGameStarted = false;
 
   void _startGame(bool playerFirst) {
     setState(() {
       playerStarts = playerFirst;
       isGameStarted = true;
+      board = List.generate(9, (index) => '');
+      winner = '';
+      gameOver = false;
       if (!playerFirst) {
-        _aiMove(); // AI makes the first move
+        _aiMove();
       }
     });
   }
@@ -97,6 +100,15 @@ class _TicTacToePageState extends State<TicTacToePage> {
       board = List.generate(9, (index) => '');
       winner = '';
       gameOver = false;
+      if (!playerStarts) {
+        _aiMove();
+      }
+    });
+  }
+
+  void _backToMainMenu() {
+    setState(() {
+      isGameStarted = false;
     });
   }
 
@@ -129,23 +141,35 @@ class _TicTacToePageState extends State<TicTacToePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Tic Tac Toe'),
-      ),
+      // Removing the AppBar
       body: !isGameStarted
           ? Center(
-              // Start game options
+              // Main menu with title
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
-                  Text('Who starts first?', style: TextStyle(fontSize: 24)),
-                  ElevatedButton(
-                    onPressed: () => _startGame(true),
-                    child: Text('Player Starts'),
+                  Text(
+                    'Tic Tac Toe',
+                    style: TextStyle(
+                      fontSize: 48.0, // Large font size for the title
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue, // Color of the title
+                    ),
                   ),
-                  ElevatedButton(
-                    onPressed: () => _startGame(false),
-                    child: Text('AI Starts'),
+                  SizedBox(height: 20), // Spacing between title and buttons
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                      onPressed: () => _startGame(true),
+                      child: Text('Player Starts'),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ElevatedButton(
+                      onPressed: () => _startGame(false),
+                      child: Text('AI Starts'),
+                    ),
                   ),
                 ],
               ),
@@ -155,17 +179,38 @@ class _TicTacToePageState extends State<TicTacToePage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 if (winner.isNotEmpty) ...[
-                  Text(
-                    winner,
-                    style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green),
-                  ),
-                  SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _resetGame,
-                    child: Text('Restart Game'),
+                  Expanded(
+                    // Centering the end-game screen
+                    child: Center(
+                      child: Column(
+                        mainAxisSize:
+                            MainAxisSize.min, // Aligns children to the center
+                        children: [
+                          Text(
+                            winner,
+                            style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green),
+                          ),
+                          SizedBox(height: 20),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ElevatedButton(
+                              onPressed: _resetGame,
+                              child: Text('Restart Game'),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ElevatedButton(
+                              onPressed: _backToMainMenu,
+                              child: Text('Back to Main Menu'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   )
                 ] else ...[
                   GridView.builder(
