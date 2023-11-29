@@ -25,6 +25,18 @@ class _TicTacToePageState extends State<TicTacToePage> {
   List<String> board = List.generate(9, (index) => '');
   String winner = '';
   bool gameOver = false;
+  bool playerStarts = true; // New variable to track who starts
+  bool isGameStarted = false; // Track if the game has started
+
+  void _startGame(bool playerFirst) {
+    setState(() {
+      playerStarts = playerFirst;
+      isGameStarted = true;
+      if (!playerFirst) {
+        _aiMove(); // AI makes the first move
+      }
+    });
+  }
 
   void _handleTap(int index) {
     if (board[index] != '' || gameOver) return;
@@ -120,41 +132,59 @@ class _TicTacToePageState extends State<TicTacToePage> {
       appBar: AppBar(
         title: Text('Tic Tac Toe'),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          if (winner.isNotEmpty) ...[
-            Text(
-              winner,
-              style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _resetGame,
-              child: Text('Restart Game'),
-            )
-          ] else ...[
-            GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                childAspectRatio: 1.0,
-                crossAxisSpacing: 10.0,
-                mainAxisSpacing: 10.0,
+      body: !isGameStarted
+          ? Center(
+              // Start game options
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text('Who starts first?', style: TextStyle(fontSize: 24)),
+                  ElevatedButton(
+                    onPressed: () => _startGame(true),
+                    child: Text('Player Starts'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => _startGame(false),
+                    child: Text('AI Starts'),
+                  ),
+                ],
               ),
-              itemCount: 9,
-              shrinkWrap: true,
-              padding: EdgeInsets.all(16.0),
-              itemBuilder: (context, index) {
-                return _buildCell(index);
-              },
+            )
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                if (winner.isNotEmpty) ...[
+                  Text(
+                    winner,
+                    style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _resetGame,
+                    child: Text('Restart Game'),
+                  )
+                ] else ...[
+                  GridView.builder(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 1.0,
+                      crossAxisSpacing: 10.0,
+                      mainAxisSpacing: 10.0,
+                    ),
+                    itemCount: 9,
+                    shrinkWrap: true,
+                    padding: EdgeInsets.all(16.0),
+                    itemBuilder: (context, index) {
+                      return _buildCell(index);
+                    },
+                  ),
+                ],
+              ],
             ),
-          ],
-        ],
-      ),
     );
   }
 }
